@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 )
@@ -16,21 +17,41 @@ type Todo struct {
 }
 
 func main() {
-	//* this will check wheather the toldo list file is present or not, if not then it will create it
-	fileExist()
-
-	//* now we will read data from toodList.json and add decode the json into our data structure so we can perform opns
-	todoList := convertJsonToStruct()
-	fmt.Println(todoList)
-
-	var options string
+	options := ""
 	if len(os.Args) > 1 {
 		options = os.Args[1]
 	}
 
+	var file *os.File
+	createdNow := true
+	filepath := "todoList.json"
+
+	if _, err := os.Stat(filepath); err == nil {
+		createdNow = false
+	} else if !os.IsNotExist(err) {
+		log.Fatal("Error checking file:", err)
+	}
+
+	file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, 0677)
+	if err != nil {
+		log.Fatal("Error opening file:", err)
+	}
+
+	if createdNow {
+		data := []byte("[]")
+		_, err = file.Write(data)
+		if err != nil {
+			log.Fatal("Error writing to file:", err)
+		}
+	}
+
+	file.Seek(0, 0)
+	todoList := convertJsonToStruct(file)
+
+	file.Seek(0, 0)
 	switch options {
 	case "add":
-		fmt.Println(options)
+		Add(file, todoList)
 	case "delete":
 		fmt.Println(options)
 	case "edit":
@@ -46,52 +67,17 @@ func main() {
 	}
 }
 
-func fileExist() {
-
-	filePath := "todoList.json"
-
-	//* checking if file exist or not
-	if _, err := os.Stat(filePath); err == nil {
-		return
-	} else if !os.IsNotExist(err) {
-		fmt.Println("Error checking file:", err)
-		os.Exit(1)
-	}
-
-	//* if not then we will create file
-	file, err := os.Create(filePath)
-	if err != nil {
-		fmt.Println("Error while creating a file")
-	}
-	defer file.Close()
-
-	//* now we will add basic empty array where we can append json of our todo list
-	data := []byte("[]")
-	_, err = file.Write(data)
-	if err != nil {
-		fmt.Println("Error writing to file:", err)
-		os.Exit(1)
-	}
+func displayAllOptions() {
+	fmt.Print("Cmds for todo: \n\tadd <title_name>\n\t\tAdd a new todo and give a new title for it \n\tdel <src_no> \n\t\tDelete the todo for the given src number \n\tedit <src_no> <new_title> \n\t\tEdit the todo by giving a src number and a new title \n\tlist <src_no> \n\t\tList all the todos \n\tcom <src_no> \n\t\tToogle the todo to complete \n\tincom <src_no> \n\t\tToogle the todo to incomplete\n")
 }
 
-func convertJsonToStruct() []Todo {
-
-	file, err := os.Open("todoList.json")
-	if err != nil {
-		fmt.Println("Error while opening the file:", err)
-		os.Exit(1)
-	}
+func convertJsonToStruct(file *os.File) []Todo {
 
 	var todoList []Todo
-	err = json.NewDecoder(file).Decode(&todoList)
+	err := json.NewDecoder(file).Decode(&todoList)
 	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
-		os.Exit(1)
+		log.Fatal("Error decoding JSON:", err.Error())
 	}
 
 	return todoList
-}
-
-func displayAllOptions() {
-	fmt.Print("Cmds for todo: \n\tadd <title_name>\n\t\tAdd a new todo and give a new title for it \n\tdel <src_no> \n\t\tDelete the todo for the given src number \n\tedit <src_no> <new_title> \n\t\tEdit the todo by giving a src number and a new title \n\tlist <src_no> \n\t\tList all the todos \n\tcom <src_no> \n\t\tToogle the todo to complete \n\tincom <src_no> \n\t\tToogle the todo to incomplete\n")
 }
