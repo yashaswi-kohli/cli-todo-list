@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 )
 
 type Todo struct {
-	Src           int       `json:"src"`
-	Title         string    `json:"title"`
-	Completed     string    `json:"completed"`
-	CreatedTime   time.Time `json:"createdTime"`
-	CompletedTime time.Time `json:"completedTime"`
+	Src           int    `json:"src"`
+	Title         string `json:"title"`
+	Completed     string `json:"completed"`
+	CreatedTime   string `json:"createdTime"`
+	CompletedTime string `json:"completedTime"`
 }
 
 func main() {
@@ -57,7 +56,7 @@ func main() {
 	case "edit":
 		Edit(file, todoList)
 	case "list":
-		fmt.Println(options)
+		List(todoList)
 	case "com":
 		Toggle(file, todoList, true)
 	case "incom":

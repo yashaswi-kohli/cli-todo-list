@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/rodaine/table"
 )
 
 func Add(file *os.File, todoList []Todo) {
@@ -18,11 +20,14 @@ func Add(file *os.File, todoList []Todo) {
 	sliceTitle := os.Args[2:]
 	newTitle := strings.Join(sliceTitle, " ")
 
+	now := time.Now()
+	formattedTime := now.Format("Mon 02 Jan 03:04PM")
+
 	newTodo := Todo{
 		Src:         len(todoList),
 		Title:       newTitle,
 		Completed:   "❌",
-		CreatedTime: time.Now(),
+		CreatedTime: formattedTime,
 	}
 	todoList = append(todoList, newTodo)
 
@@ -31,8 +36,7 @@ func Add(file *os.File, todoList []Todo) {
 
 	err := encoder.Encode(todoList)
 	if err != nil {
-		fmt.Println("Error encoding JSON:", err)
-		return
+		log.Fatal("Error encoding JSON:", err)
 	}
 }
 
@@ -42,7 +46,6 @@ func Delete(file *os.File, todoList []Todo) {
 	}
 
 	id, err := strconv.Atoi(os.Args[2])
-	fmt.Println(id)
 	if err != nil {
 		log.Fatal("Invalid ID")
 	}
@@ -54,8 +57,7 @@ func Delete(file *os.File, todoList []Todo) {
 
 	err = file.Truncate(0)
 	if err != nil {
-		fmt.Println("Error truncating file:", err)
-		return
+		log.Fatal("Error truncating file:", err)
 	}
 
 	encoder := json.NewEncoder(file)
@@ -63,8 +65,7 @@ func Delete(file *os.File, todoList []Todo) {
 
 	err = encoder.Encode(todoList)
 	if err != nil {
-		fmt.Println("Error encoding JSON:", err)
-		return
+		log.Fatal("Error encoding JSON:", err)
 	}
 }
 
@@ -74,7 +75,6 @@ func Edit(file *os.File, todoList []Todo) {
 	}
 
 	id, err := strconv.Atoi(os.Args[2])
-	fmt.Println(id)
 	if err != nil {
 		log.Fatal("Invalid ID")
 	}
@@ -86,8 +86,7 @@ func Edit(file *os.File, todoList []Todo) {
 
 	err = file.Truncate(0)
 	if err != nil {
-		fmt.Println("Error truncating file:", err)
-		return
+		log.Fatal("Error truncating file:", err)
 	}
 
 	encoder := json.NewEncoder(file)
@@ -95,8 +94,7 @@ func Edit(file *os.File, todoList []Todo) {
 
 	err = encoder.Encode(todoList)
 	if err != nil {
-		fmt.Println("Error encoding JSON:", err)
-		return
+		log.Fatal("Error encoding JSON:", err)
 	}
 }
 
@@ -106,22 +104,26 @@ func Toggle(file *os.File, todoList []Todo, toggle bool) {
 	}
 
 	id, err := strconv.Atoi(os.Args[2])
-	fmt.Println(id)
 	if err != nil {
 		log.Fatal("Invalid ID")
 	}
 
 	if toggle {
 		todoList[id].Completed = "✅"
-		todoList[id].CompletedTime = time.Now()
+
+		now := time.Now()
+		formattedTime := now.Format("Mon 02 Jan 03:04PM")
+
+		todoList[id].CompletedTime = formattedTime
+		log.Fatal(todoList[id].CompletedTime)
+
 	} else {
 		todoList[id].Completed = "❌"
 	}
 
 	err = file.Truncate(0)
 	if err != nil {
-		fmt.Println("Error truncating file:", err)
-		return
+		log.Fatal("Error truncating file:", err)
 	}
 
 	encoder := json.NewEncoder(file)
@@ -129,7 +131,24 @@ func Toggle(file *os.File, todoList []Todo, toggle bool) {
 
 	err = encoder.Encode(todoList)
 	if err != nil {
-		fmt.Println("Error encoding JSON:", err)
-		return
+		log.Fatal("Error encoding JSON:", err)
 	}
+}
+
+func List(todoList []Todo) {
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+
+	tbl := table.New("Src No.", "Title", "Completed", "Created At", "Completed At")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+	for _, val := range todoList {
+		if val.Completed == "❌" {
+			tbl.AddRow(val.Src, val.Title, val.Completed, val.CreatedTime)
+		} else {
+			tbl.AddRow(val.Src, val.Title, val.Completed, val.CreatedTime, val.CompletedTime)
+		}
+	}
+
+	tbl.Print()
 }
