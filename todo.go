@@ -55,7 +55,7 @@ func main() {
 	case "delete":
 		fmt.Println(options)
 	case "edit":
-		fmt.Println(options)
+		Edit(file, todoList)
 	case "list":
 		fmt.Println(options)
 	case "com":
