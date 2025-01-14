@@ -53,15 +53,15 @@ func main() {
 	case "add":
 		Add(file, todoList)
 	case "delete":
-		fmt.Println(options)
+		Delete(file, todoList)
 	case "edit":
 		Edit(file, todoList)
 	case "list":
 		fmt.Println(options)
 	case "com":
-		fmt.Println(options)
+		Toggle(file, todoList, true)
 	case "incom":
-		fmt.Println(options)
+		Toggle(file, todoList, false)
 	default:
 		displayAllOptions()
 	}
