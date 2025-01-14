@@ -1,12 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/fatih/color"
-	"github.com/rodaine/table"
 )
 
 type Todo struct {
@@ -19,19 +17,16 @@ type Todo struct {
 
 func main() {
 	//* this will check wheather the toldo list file is present or not, if not then it will create it
-	// fileExist()
+	fileExist()
+
+	//* now we will read data from toodList.json and add decode the json into our data structure so we can perform opns
+	todoList := convertJsonToStruct()
+	fmt.Println(todoList)
 
 	var options string
 	if len(os.Args) > 1 {
 		options = os.Args[1]
 	}
-
-	//* Here we are creating table
-	columnFmt := color.New(color.FgYellow).SprintfFunc()
-	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
-
-	tbl := table.New("Src No.", "Title", "Completed", "Created At", "Completed At")
-	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
 
 	switch options {
 	case "add":
@@ -41,7 +36,7 @@ func main() {
 	case "edit":
 		fmt.Println(options)
 	case "list":
-		listAll(tbl)
+		fmt.Println(options)
 	case "com":
 		fmt.Println(options)
 	case "incom":
@@ -49,6 +44,52 @@ func main() {
 	default:
 		displayAllOptions()
 	}
+}
+
+func fileExist() {
+
+	filePath := "todoList.json"
+
+	//* checking if file exist or not
+	if _, err := os.Stat(filePath); err == nil {
+		return
+	} else if !os.IsNotExist(err) {
+		fmt.Println("Error checking file:", err)
+		os.Exit(1)
+	}
+
+	//* if not then we will create file
+	file, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println("Error while creating a file")
+	}
+	defer file.Close()
+
+	//* now we will add basic empty array where we can append json of our todo list
+	data := []byte("[]")
+	_, err = file.Write(data)
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+		os.Exit(1)
+	}
+}
+
+func convertJsonToStruct() []Todo {
+
+	file, err := os.Open("todoList.json")
+	if err != nil {
+		fmt.Println("Error while opening the file:", err)
+		os.Exit(1)
+	}
+
+	var todoList []Todo
+	err = json.NewDecoder(file).Decode(&todoList)
+	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		os.Exit(1)
+	}
+
+	return todoList
 }
 
 func displayAllOptions() {
